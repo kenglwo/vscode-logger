@@ -19,6 +19,7 @@
   "homepage": "https://github.com/HirokiOka/vscode-logger#readme",
   "dependencies": {
     "generator-code": "^1.6.14",
+    "vsce": "^2.11.0",
     "yo": "^4.3.0"
   }
 }

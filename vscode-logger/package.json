@@ -48,6 +48,7 @@
   "dependencies": {
     "edit-distance": "^1.0.5",
     "esprima": "^4.0.1",
-    "pg": "^8.8.0"
+    "pg": "^8.8.0",
+    "vsce": "^2.11.0"
   }
 }
