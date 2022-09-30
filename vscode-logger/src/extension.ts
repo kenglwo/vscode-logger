@@ -1,26 +1,73 @@
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
+import * as ep from 'esprima';
+import * as ed from 'edit-distance';
+import * as pg from 'pg';
 
-// this method is called when your extension is activated
-// your extension is activated the very first time the command is executed
+export const setConfig: pg.ClientConfig = {
+  user: 'hiroka',
+  host: 'localhost',
+  database: 'test',
+  password: 'oHirokik1123',
+  port: 5432
+};
+
 export function activate(context: vscode.ExtensionContext) {
-	
-	// Use the console to output diagnostic information (console.log) and errors (console.error)
-	// This line of code will only be executed once when your extension is activated
-	console.log('Congratulations, your extension "vscode-logger" is now active!');
+  vscode.window.showInformationMessage('extension enabled');
+  const disposable = vscode.commands.registerCommand('vscode-logger.helloWorld', async () => {
+    const studentId: any = await vscode.window.showInputBox();
+    const dbClient = new pg.Client(setConfig);
+    dbClient.connect()
+      .then(() => vscode.window.showInformationMessage('DB connected.'))
+      .catch((e) => {
+        console.error(e);
+      }); 
 
-	// The command has been defined in the package.json file
-	// Now provide the implementation of the command with registerCommand
-	// The commandId parameter must match the command field in package.json
-	let disposable = vscode.commands.registerCommand('vscode-logger.helloWorld', () => {
-		// The code you place here will be executed every time your command is executed
-		// Display a message box to the user
-		vscode.window.showInformationMessage('Hello World from vscode-logger!');
-	});
+    let lastSourceCode: string = ''; 
 
-	context.subscriptions.push(disposable);
+    vscode.workspace.onDidSaveTextDocument((document: vscode.TextDocument) => {
+      const currentDate: string = new Date().toLocaleString(); 
+      const sourceCode: string = document.getText();
+      const sloc: number = sourceCode.split('\n').length;
+      const ted: number = calcTed(lastSourceCode, sourceCode);
+
+      vscode.window.showInformationMessage('saved.');
+      postDataToDB(dbClient, studentId, currentDate, sourceCode, sloc, ted);
+      lastSourceCode = sourceCode;
+    });
+  });
+  context.subscriptions.push(disposable);
 }
 
-// this method is called when your extension is deactivated
-export function deactivate() {}
+
+function postDataToDB(dbClient: any, id: string, date: string, code: string, sloc: number, ted: number): void {
+  const query = {
+    text: 'INSERT INTO exelog(userId, executedAt, sourceCode, sloc, ted) VALUES($1, $2, $3, $4, $5)',
+    values: [id, date, code, sloc, ted],
+  };
+  dbClient.query(query, (err: Error, res: any) => {
+    if (err) console.log(err);
+  });
+}
+
+
+function calcTed(lastSourceCode: string, currentSourceCode: string): number {
+  const lastAst = ep.parseScript(lastSourceCode);
+  const currentAst = ep.parseScript(currentSourceCode);
+
+  let insert = function(node: any) { return 1; };
+  let remove = insert;
+  let update = function(nodeA: any, nodeB: any) { 
+    return nodeA.body !== nodeB.body ? 1 : 0;
+  }
+  let children = function(node: any) { return node.body; };
+
+  let ted: number = 0;
+  try {
+    ted = ed.ted(lastAst, currentAst, children, insert, remove, update).distance;
+  } catch (e) {
+    console.log(e);
+  }
+  return ted;
+}
+
+export function deactivate() {};
