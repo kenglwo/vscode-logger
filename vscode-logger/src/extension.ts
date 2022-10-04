@@ -1,54 +1,39 @@
 import * as vscode from 'vscode';
 import * as ep from 'esprima';
 import * as ed from 'edit-distance';
-import * as pg from 'pg';
+import * as dotenv from 'dotenv';
+dotenv.config();
+import { Schema, model, connect } from 'mongoose';
 
-export const setConfig: pg.ClientConfig = {
-  user: 'hiroka',
-  host: 'localhost',
-  database: 'test',
-  password: 'oHirokik1123',
-  port: 5432
-};
 
-export function activate(context: vscode.ExtensionContext) {
-  vscode.window.showInformationMessage('extension enabled');
-  const disposable = vscode.commands.registerCommand('vscode-logger.helloWorld', async () => {
-    const studentId: any = await vscode.window.showInputBox();
-    const dbClient = new pg.Client(setConfig);
-    dbClient.connect()
-      .then(() => vscode.window.showInformationMessage('DB connected.'))
-      .catch((e) => {
-        console.error(e);
-      }); 
-
-    let lastSourceCode: string = ''; 
-
-    vscode.workspace.onDidSaveTextDocument((document: vscode.TextDocument) => {
-      const currentDate: string = new Date().toLocaleString(); 
-      const sourceCode: string = document.getText();
-      const sloc: number = sourceCode.split('\n').length;
-      const ted: number = calcTed(lastSourceCode, sourceCode);
-
-      vscode.window.showInformationMessage('saved.');
-      postDataToDB(dbClient, studentId, currentDate, sourceCode, sloc, ted);
-      lastSourceCode = sourceCode;
-    });
-  });
-  context.subscriptions.push(disposable);
+interface ICodeParams {
+  id: number;
+  savedAt: string;
+  code: string;
+  sloc: number;
+  ted: number;
 }
 
+const codeParamsSchema = new Schema<ICodeParams>({
+  id: { type: Number, required: true },
+  savedAt: { type: String, required: true },
+  code: { type: String, required: true },
+  sloc: { type: Number, required: true },
+  ted: { type: Number, required: true },
+});
 
-function postDataToDB(dbClient: any, id: string, date: string, code: string, sloc: number, ted: number): void {
-  const query = {
-    text: 'INSERT INTO exelog(userId, executedAt, sourceCode, sloc, ted) VALUES($1, $2, $3, $4, $5)',
-    values: [id, date, code, sloc, ted],
-  };
-  dbClient.query(query, (err: Error, res: any) => {
-    if (err) console.log(err);
-  });
+const dbDriver = process.env.DBDRIVER;
+const dbUser = process.env.DBUSER;
+const dbPassword = process.env.DBPWD;
+const dbHost = process.env.DBHOST;
+
+const CodeParams = model<ICodeParams>('CodeParams', codeParamsSchema);
+
+
+async function insertToDb(id: number, savedAt: string, code: string, sloc: number, ted: number) {
+  const codeParams = new CodeParams({ id, savedAt, code, sloc, ted });
+  await codeParams.save().catch(err => console.log(err));
 }
-
 
 function calcTed(lastSourceCode: string, currentSourceCode: string): number {
   const lastAst = ep.parseScript(lastSourceCode);
@@ -69,5 +54,28 @@ function calcTed(lastSourceCode: string, currentSourceCode: string): number {
   }
   return ted;
 }
+
+
+export function activate(context: vscode.ExtensionContext) {
+  vscode.window.showInformationMessage('extension enabled');
+  const disposable = vscode.commands.registerCommand('vscode-logger.helloWorld', async () => {
+    await connect(`${dbDriver}://${dbUser}:${dbPassword}@${dbHost}/?retryWrites=true&w=majority`).catch(err => console.log(err));
+    const studentId: any = await vscode.window.showInputBox();
+
+    let lastSourceCode: string = ''; 
+    vscode.workspace.onDidSaveTextDocument((document: vscode.TextDocument) => {
+      const currentDate: string = new Date().toLocaleString(); 
+      const sourceCode: string = document.getText();
+      const sloc: number = sourceCode.split('\n').length;
+      const ted: number = calcTed(lastSourceCode, sourceCode);
+
+      insertToDb(studentId, currentDate, sourceCode, sloc, ted);
+      vscode.window.showInformationMessage('saved.');
+      lastSourceCode = sourceCode;
+    });
+  });
+  context.subscriptions.push(disposable);
+}
+
 
 export function deactivate() {};

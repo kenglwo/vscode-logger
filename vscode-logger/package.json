@@ -30,10 +30,12 @@
     "test": "node ./out/test/runTest.js"
   },
   "devDependencies": {
+    "@types/dotenv": "^8.2.0",
     "@types/esprima": "^4.0.3",
     "@types/estree": "^1.0.0",
     "@types/glob": "^7.2.0",
     "@types/mocha": "^9.1.1",
+    "@types/mongoose": "^5.11.97",
     "@types/node": "16.x",
     "@types/pg": "^8.6.5",
     "@types/vscode": "^1.71.0",
@@ -46,8 +48,10 @@
     "typescript": "^4.7.4"
   },
   "dependencies": {
+    "dotenv": "^16.0.3",
     "edit-distance": "^1.0.5",
     "esprima": "^4.0.1",
+    "mongoose": "^6.6.4",
     "pg": "^8.8.0",
     "vsce": "^2.11.0"
   }

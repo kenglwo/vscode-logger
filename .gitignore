@@ -1,3 +1,4 @@
 node_modules/
 vscode-logger/node_modules/
 vscode-logger/out/
+vscode-logger/.env
