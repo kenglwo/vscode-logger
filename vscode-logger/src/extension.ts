@@ -43,7 +43,7 @@ function calcTed(lastSourceCode: string, currentSourceCode: string): number {
   let remove = insert;
   let update = function(nodeA: any, nodeB: any) { 
     return nodeA.body !== nodeB.body ? 1 : 0;
-  }
+  };
   let children = function(node: any) { return node.body; };
 
   let ted: number = 0;
