@@ -7,7 +7,7 @@ import { Schema, model, connect } from 'mongoose';
 
 
 interface ICodeParams {
-  id: number;
+  id: string;
   savedAt: string;
   code: string;
   sloc: number;
@@ -15,7 +15,7 @@ interface ICodeParams {
 }
 
 const codeParamsSchema = new Schema<ICodeParams>({
-  id: { type: Number, required: true },
+  id: { type: String, required: true },
   savedAt: { type: String, required: true },
   code: { type: String, required: true },
   sloc: { type: Number, required: true },
@@ -30,9 +30,9 @@ const dbHost = process.env.DBHOST;
 const CodeParams = model<ICodeParams>('CodeParams', codeParamsSchema);
 
 
-async function insertToDb(id: number, savedAt: string, code: string, sloc: number, ted: number) {
+async function insertToDb(id: string, savedAt: string, code: string, sloc: number, ted: number) {
   const codeParams = new CodeParams({ id, savedAt, code, sloc, ted });
-  await codeParams.save().catch(err => console.log(err));
+  await codeParams.save();
 }
 
 function calcTed(lastSourceCode: string, currentSourceCode: string): number {
@@ -56,23 +56,32 @@ function calcTed(lastSourceCode: string, currentSourceCode: string): number {
 }
 
 
-export function activate(context: vscode.ExtensionContext) {
+export async function activate(context: vscode.ExtensionContext) {
   vscode.window.showInformationMessage('extension enabled');
+
   const disposable = vscode.commands.registerCommand('vscode-logger.helloWorld', async () => {
-    await connect(`${dbDriver}://${dbUser}:${dbPassword}@${dbHost}/?retryWrites=true&w=majority`).catch(err => console.log(err));
+    try {
+      await connect(`${dbDriver}://${dbUser}:${dbPassword}@${dbHost}/?retryWrites=true&w=majority`);
+    } catch (e) {
+        console.log(e);
+    }
+
     const studentId: any = await vscode.window.showInputBox();
 
     let lastSourceCode: string = ''; 
     vscode.workspace.onDidSaveTextDocument((document: vscode.TextDocument) => {
+      if (document.languageId !== 'javascript') return;
       const currentDate: string = new Date().toLocaleString(); 
       const sourceCode: string = document.getText();
       const sloc: number = sourceCode.split('\n').length;
       const ted: number = calcTed(lastSourceCode, sourceCode);
 
-      insertToDb(studentId, currentDate, sourceCode, sloc, ted);
+      insertToDb(studentId, currentDate, sourceCode, sloc, ted)
+        .catch((err: undefined) => console.log(err));
       vscode.window.showInformationMessage('saved.');
       lastSourceCode = sourceCode;
     });
+
   });
   context.subscriptions.push(disposable);
 }
