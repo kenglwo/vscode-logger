@@ -32,7 +32,12 @@ const CodeParams = model<ICodeParams>('CodeParams', codeParamsSchema);
 
 async function insertToDb(id: string, savedAt: string, code: string, sloc: number, ted: number) {
   const codeParams = new CodeParams({ id, savedAt, code, sloc, ted });
-  await codeParams.save();
+  try {
+    await codeParams.save();
+    vscode.window.showInformationMessage('saved');
+  } catch (e) {
+    vscode.window.showInformationMessage('post failed');
+  }
 }
 
 function calcTed(lastSourceCode: string, currentSourceCode: string): number {
@@ -62,8 +67,9 @@ export async function activate(context: vscode.ExtensionContext) {
   const disposable = vscode.commands.registerCommand('vscode-logger.helloWorld', async () => {
     try {
       await connect(`${dbDriver}://${dbUser}:${dbPassword}@${dbHost}/?retryWrites=true&w=majority`);
+      vscode.window.showInformationMessage('DB connected');
     } catch (e) {
-        console.log(e);
+      console.log(e);
     }
 
     const studentId: any = await vscode.window.showInputBox();
@@ -76,9 +82,7 @@ export async function activate(context: vscode.ExtensionContext) {
       const sloc: number = sourceCode.split('\n').length;
       const ted: number = calcTed(lastSourceCode, sourceCode);
 
-      insertToDb(studentId, currentDate, sourceCode, sloc, ted)
-        .catch((err: undefined) => console.log(err));
-      vscode.window.showInformationMessage('saved.');
+      insertToDb(studentId, currentDate, sourceCode, sloc, ted);
       lastSourceCode = sourceCode;
     });
 
