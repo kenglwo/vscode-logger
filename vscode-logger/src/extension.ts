@@ -1,8 +1,8 @@
 import * as vscode from 'vscode';
-import * as ep from 'esprima';
-import * as ed from 'edit-distance';
-import * as dotenv from 'dotenv';
-dotenv.config();
+import { parseScript } from 'esprima';
+import { ted } from 'edit-distance';
+import { config } from 'dotenv';
+config();
 import { Schema, model, connect } from 'mongoose';
 
 
@@ -41,8 +41,8 @@ async function insertToDb(id: string, savedAt: string, code: string, sloc: numbe
 }
 
 function calcTed(lastSourceCode: string, currentSourceCode: string): number {
-  const lastAst = ep.parseScript(lastSourceCode);
-  const currentAst = ep.parseScript(currentSourceCode);
+  const lastAst = parseScript(lastSourceCode);
+  const currentAst = parseScript(currentSourceCode);
 
   let insert = function(node: any) { return 1; };
   let remove = insert;
@@ -51,13 +51,13 @@ function calcTed(lastSourceCode: string, currentSourceCode: string): number {
   };
   let children = function(node: any) { return node.body; };
 
-  let ted: number = 0;
+  let astEditDistance: number = 0;
   try {
-    ted = ed.ted(lastAst, currentAst, children, insert, remove, update).distance;
+    astEditDistance = ted(lastAst, currentAst, children, insert, remove, update).distance;
   } catch (e) {
     console.log(e);
   }
-  return ted;
+  return astEditDistance;
 }
 
 
