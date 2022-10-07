@@ -35,8 +35,8 @@ async function insertToDb(id: string, savedAt: string, code: string, sloc: numbe
   try {
     await codeParams.save();
     vscode.window.showInformationMessage('saved');
-  } catch (e) {
-    vscode.window.showInformationMessage('post failed');
+  } catch (e: any) {
+    vscode.window.showInformationMessage(e.message);
   }
 }
 
@@ -68,8 +68,8 @@ export async function activate(context: vscode.ExtensionContext) {
     try {
       await connect(`${dbDriver}://${dbUser}:${dbPassword}@${dbHost}/?retryWrites=true&w=majority`);
       vscode.window.showInformationMessage(`${dbDriver}://${dbUser}:${dbPassword}@${dbHost}/?retryWrites=true&w=majority`);
-    } catch (e) {
-      console.log(e);
+    } catch (e: any) {
+      vscode.window.showInformationMessage(e.message);
     }
 
     const studentId: any = await vscode.window.showInputBox();
