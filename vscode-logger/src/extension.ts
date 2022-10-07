@@ -66,6 +66,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
   const disposable = vscode.commands.registerCommand('vscode-logger.helloWorld', async () => {
     try {
+      vscode.window.showInformationMessage(`${dbDriver}://${dbUser}:${dbPassword}@${dbHost}/?retryWrites=true&w=majority`);
       await connect(`${dbDriver}://${dbUser}:${dbPassword}@${dbHost}/?retryWrites=true&w=majority`);
       vscode.window.showInformationMessage(`${dbDriver}://${dbUser}:${dbPassword}@${dbHost}/?retryWrites=true&w=majority`);
     } catch (e: any) {
