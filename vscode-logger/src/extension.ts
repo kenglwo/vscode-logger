@@ -1,44 +1,42 @@
 import * as vscode from 'vscode';
 import { parseScript } from 'esprima';
 import { ted } from 'edit-distance';
+import fetch from 'node-fetch';
 import { config } from 'dotenv';
-config();
-import { Schema, model, connect } from 'mongoose';
+config({ path: __dirname + '/../.env' });
 
 
-interface ICodeParams {
-  id: string;
-  savedAt: string;
-  code: string;
-  sloc: number;
-  ted: number;
+const API_ENDPOINT: any = process.env.API_ENDPOINT;
+const API_KEY: any = process.env.API_KEY;
+console.log(API_KEY);
+
+async function insertOne(id: string, savedAt: string, code: string, sloc: number, ted: number) {
+  const options = {
+      method: 'POST',
+      headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Request-Headers': '*',
+          'api-key': API_KEY
+      },
+      body: JSON.stringify({
+          'collection': 'codeparams',
+          'database': 'test',
+          'dataSource': 'Cluster0',
+          'document': {
+            'id': id,
+            'savedAt': savedAt,
+            'code': code,
+            'sloc': sloc,
+            'ted': ted
+          }
+        })
+      };
+
+  const res = await fetch(API_ENDPOINT, options);
+  const resJson = await res.json();
+  return resJson.insertedId;
 }
 
-const codeParamsSchema = new Schema<ICodeParams>({
-  id: { type: String, required: true },
-  savedAt: { type: String, required: true },
-  code: { type: String, required: true },
-  sloc: { type: Number, required: true },
-  ted: { type: Number, required: true },
-});
-
-const dbDriver = process.env.DBDRIVER;
-const dbUser = process.env.DBUSER;
-const dbPassword = process.env.DBPWD;
-const dbHost = process.env.DBHOST;
-
-const CodeParams = model<ICodeParams>('CodeParams', codeParamsSchema);
-
-
-async function insertToDb(id: string, savedAt: string, code: string, sloc: number, ted: number) {
-  const codeParams = new CodeParams({ id, savedAt, code, sloc, ted });
-  try {
-    await codeParams.save();
-    vscode.window.showInformationMessage('saved');
-  } catch (e: any) {
-    vscode.window.showInformationMessage(e.message);
-  }
-}
 
 function calcTed(lastSourceCode: string, currentSourceCode: string): number {
   const lastAst = parseScript(lastSourceCode);
@@ -65,25 +63,24 @@ export async function activate(context: vscode.ExtensionContext) {
   vscode.window.showInformationMessage('extension enabled');
 
   const disposable = vscode.commands.registerCommand('vscode-logger.helloWorld', async () => {
-    try {
-      vscode.window.showInformationMessage(`${dbDriver}://${dbUser}:${dbPassword}@${dbHost}/?retryWrites=true&w=majority`);
-      await connect(`${dbDriver}://${dbUser}:${dbPassword}@${dbHost}/?retryWrites=true&w=majority`);
-      vscode.window.showInformationMessage(`${dbDriver}://${dbUser}:${dbPassword}@${dbHost}/?retryWrites=true&w=majority`);
-    } catch (e: any) {
-      vscode.window.showInformationMessage(e.message);
-    }
-
     const studentId: any = await vscode.window.showInputBox();
 
     let lastSourceCode: string = ''; 
-    vscode.workspace.onDidSaveTextDocument((document: vscode.TextDocument) => {
+
+    vscode.workspace.onDidSaveTextDocument(async (document: vscode.TextDocument) => {
       if (document.languageId !== 'javascript') return;
       const currentDate: string = new Date().toLocaleString(); 
       const sourceCode: string = document.getText();
       const sloc: number = sourceCode.split('\n').length;
       const ted: number = calcTed(lastSourceCode, sourceCode);
 
-      insertToDb(studentId, currentDate, sourceCode, sloc, ted);
+      try {
+        const res = await insertOne(studentId, currentDate, sourceCode, sloc, ted);
+        vscode.window.showInformationMessage(`savedId: ${res}`);
+      } catch (e: any) {
+        vscode.window.showInformationMessage(e.message);
+      }
+
       lastSourceCode = sourceCode;
     });
 
