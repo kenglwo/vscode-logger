@@ -1,6 +1,6 @@
 .DS_Store
 node_modules/
-vscode-logger/node_modules/
-vscode-logger/out/
-vscode-logger/.env
-vscode-logger/src/dbConfig.ts
+js-logger/node_modules/
+js-logger/out/
+js-logger/.env
+js-logger/dbConfig.ts
