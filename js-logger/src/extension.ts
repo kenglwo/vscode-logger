@@ -59,33 +59,36 @@ function calcTed(lastSourceCode: string, currentSourceCode: string): number {
 
 
 export async function activate(context: vscode.ExtensionContext) {
-  vscode.window.showInformationMessage('extension enabled');
+  vscode.window.showInformationMessage('js-logger is activated');
 
-  const disposable = vscode.commands.registerCommand('js-logger.start', async () => {
-    vscode.window.showInformationMessage('logger start');
-    const studentId: any = await vscode.window.showInputBox();
+  let studentId: any = context.workspaceState.get('studentId');
+  if (studentId === undefined) {
+    studentId = await vscode.window.showInputBox();
+    context.workspaceState.update('studentId', studentId);
+    vscode.window.showInformationMessage(`Student ID ${studentId} is registered.`);
+  } else {
+    vscode.window.showInformationMessage(`Your student ID: ${studentId}`);
+  }
 
-    let lastSourceCode: string = ''; 
+  let lastSourceCode: string = ''; 
 
-    vscode.workspace.onDidSaveTextDocument(async (document: vscode.TextDocument) => {
-      if (document.languageId !== 'javascript') return;
-      const currentDate: string = new Date().toLocaleString(); 
-      const sourceCode: string = document.getText();
-      const sloc: number = sourceCode.split('\n').length;
-      const ted: number = calcTed(lastSourceCode, sourceCode);
+  vscode.workspace.onDidSaveTextDocument(async (document: vscode.TextDocument) => {
+    if (document.languageId !== 'javascript') return;
+    const currentDate: string = new Date().toLocaleString(); 
+    const sourceCode: string = document.getText();
+    const sloc: number = sourceCode.split('\n').length;
+    const ted: number = calcTed(lastSourceCode, sourceCode);
 
-      try {
-        const res = await insertOne(studentId, currentDate, sourceCode, sloc, ted);
-        vscode.window.showInformationMessage(`savedId: ${res}`);
-      } catch (e: any) {
-        vscode.window.showInformationMessage(e.message);
-      }
+    try {
+      const res = await insertOne(studentId, currentDate, sourceCode, sloc, ted);
+      vscode.window.showInformationMessage(`savedId: ${res}`);
+    } catch (e: any) {
+      vscode.window.showInformationMessage(e.message);
+    }
 
-      lastSourceCode = sourceCode;
-    });
-
+    lastSourceCode = sourceCode;
   });
-  context.subscriptions.push(disposable);
+
 }
 
 
