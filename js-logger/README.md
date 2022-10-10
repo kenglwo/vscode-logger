@@ -1,6 +1,6 @@
 # vscode-logger
 
-[日本語版READMEはこちら] (https://github.com/HirokiOka/vscode-logger/tree/main/js-logger/README-ja.md)
+[日本語版READMEはこちら](https://github.com/HirokiOka/vscode-logger/tree/main/js-logger/README-ja.md)
 
 This extension logs the JavaScript files you write.
 This extension was created for the Kobe University course "Basic Programming Exercise I".
