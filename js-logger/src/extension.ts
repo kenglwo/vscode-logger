@@ -75,6 +75,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
   vscode.workspace.onDidSaveTextDocument(async (document: vscode.TextDocument) => {
     if (document.languageId !== 'javascript') return;
+    studentId = context.workspaceState.get('studentId');
     const currentDate: string = new Date().toLocaleString(); 
     const sourceCode: string = document.getText();
     const sloc: number = sourceCode.split('\n').length;
@@ -83,7 +84,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
     try {
       const res = await insertOne(studentId, wsName, currentDate, sourceCode, sloc, ted);
-      vscode.window.showInformationMessage(`savedId: ${res}`);
+      vscode.window.showInformationMessage(`code saved: ${res}`);
     } catch (e: any) {
       vscode.window.showInformationMessage(e.message);
     }
@@ -91,6 +92,13 @@ export async function activate(context: vscode.ExtensionContext) {
     lastSourceCode = sourceCode;
   });
 
+  const disposable = vscode.commands.registerCommand('studentId.change', async () => {
+    const newId: any = await vscode.window.showInputBox();
+    context.workspaceState.update('studentId', newId);
+    vscode.window.showInformationMessage(`your student ID :${newId}`);
+  });
+
+  context.subscriptions.push(disposable);
 }
 
 

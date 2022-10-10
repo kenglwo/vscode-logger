@@ -4,7 +4,7 @@
   "description": "records your source code",
   "publisher": "HirokiOka",
   "repository": "https://github.com/HirokiOka/vscode-logger",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "engines": {
     "vscode": "^1.71.0"
   },
@@ -15,6 +15,14 @@
     "onStartupFinished"
   ],
   "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "studentId.change",
+        "title": "changeId"
+      }
+    ]
+  },
   "scripts": {
     "vscode:prepublish": "npm run esbuild-base -- --minify",
     "compile": "tsc -p ./",
