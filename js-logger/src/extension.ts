@@ -9,7 +9,7 @@ config({ path: __dirname + '/../.env' });
 const API_ENDPOINT: any = process.env.API_ENDPOINT;
 const API_KEY: any = process.env.API_KEY;
 
-async function insertOne(id: string, savedAt: string, code: string, sloc: number, ted: number) {
+async function insertOne(id: string, workspaceName: string, savedAt: string, code: string, sloc: number, ted: number) {
   const options = {
       method: 'POST',
       headers: {
@@ -23,6 +23,7 @@ async function insertOne(id: string, savedAt: string, code: string, sloc: number
           'dataSource': 'Cluster0',
           'document': {
             'id': id,
+            'workspace': workspaceName,
             'savedAt': savedAt,
             'code': code,
             'sloc': sloc,
@@ -78,9 +79,10 @@ export async function activate(context: vscode.ExtensionContext) {
     const sourceCode: string = document.getText();
     const sloc: number = sourceCode.split('\n').length;
     const ted: number = calcTed(lastSourceCode, sourceCode);
+    const wsName: any = vscode.workspace.name;
 
     try {
-      const res = await insertOne(studentId, currentDate, sourceCode, sloc, ted);
+      const res = await insertOne(studentId, wsName, currentDate, sourceCode, sloc, ted);
       vscode.window.showInformationMessage(`savedId: ${res}`);
     } catch (e: any) {
       vscode.window.showInformationMessage(e.message);
