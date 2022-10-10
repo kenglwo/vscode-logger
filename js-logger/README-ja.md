@@ -1,6 +1,6 @@
 # vscode-logger
 
-[English README is here] (https://github.com/HirokiOka/vscode-logger/tree/main/js-logger/README.md)
+[English README is here](https://github.com/HirokiOka/vscode-logger/tree/main/js-logger/README.md)
 
 VSCode内で記述しているJavaScriptファイルのログをとるVSCode拡張機能です．
 この拡張機能は，神戸大学で開講されている「プログラミング基礎演習Ⅰ」の受講者の利用を想定して開発されました．
