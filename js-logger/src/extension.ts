@@ -3,13 +3,16 @@ import { parseScript } from 'esprima';
 import { ted } from 'edit-distance';
 import fetch from 'node-fetch';
 import { config } from 'dotenv';
-config({ path: __dirname + '/../.env' });
+import path = require('path');
+const path_env = path.join(__dirname, '..', '..', '.env')
+config({ path: path_env});
 
+const API_ENDPOINT: string | undefined = process.env.API_ENDPOINT;
+const API_KEY: string | undefined = process.env.API_KEY;
 
-const API_ENDPOINT: any = process.env.API_ENDPOINT;
-const API_KEY: any = process.env.API_KEY;
-
-async function insertOne(id: string, workspaceName: string, savedAt: string, code: string, sloc: number, ted: number) {
+async function insertOne(studentId: string, workspaceName: string, savedAt: string, code: string, sloc: number, ted: number) {
+  const filePath = vscode.window.activeTextEditor === undefined ? "" : vscode.window.activeTextEditor.document.uri.fsPath;
+  const filename = path.basename(filePath);
   const options = {
       method: 'POST',
       headers: {
@@ -20,10 +23,11 @@ async function insertOne(id: string, workspaceName: string, savedAt: string, cod
       body: JSON.stringify({
           'collection': 'codeparams',
           'database': 'test',
-          'dataSource': 'Cluster0',
+          'classCode': process.env.CLASS_CODE,
           'document': {
-            'id': id,
+            'studentId': studentId,
             'workspace': workspaceName,
+            'filename': filename,
             'savedAt': savedAt,
             'code': code,
             'sloc': sloc,
@@ -31,10 +35,15 @@ async function insertOne(id: string, workspaceName: string, savedAt: string, cod
           }
         })
       };
-
-  const res = await fetch(API_ENDPOINT, options);
-  const resJson = await res.json();
-  return resJson.insertedId;
+ 
+  if (API_ENDPOINT !== undefined) {
+    // @ts-ignore
+    const res = await fetch(API_ENDPOINT, options);
+    const resJson = await res.json();
+    return resJson.status;
+  } else {
+    return null;
+  }
 }
 
 
