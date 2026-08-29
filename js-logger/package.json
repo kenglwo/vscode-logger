@@ -1,6 +1,6 @@
 {
   "name": "js-logger",
-  "displayName": "js-logger",
+  "displayName": "js-logger_modified",
   "description": "records your source code",
   "publisher": "HirokiOka",
   "repository": "https://github.com/HirokiOka/vscode-logger",
